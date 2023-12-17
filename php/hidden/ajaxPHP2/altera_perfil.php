@@ -21,9 +21,10 @@ if(filter_has_var(INPUT_POST,'altera_perfil_titulo') && filter_has_var(INPUT_POS
 			if($grup->obj->titulo !== "Admin"){
 			if(preg_match("/^\w.{3,99}$/", $titulo))
 			{
+				$sql = $connnect->prepare("UPDATE perfil_acesso SET titulo = ?, descricao = ? WHERE codigo = ?");
 				try
 				{
-					$sql = $connnect->prepare("UPDATE perfil_acesso SET titulo = ?, descricao = ? WHERE codigo = ?");
+					$connnect->beginTransaction();
 					$sql->execute(array($titulo, $desc, $id));
 					if($sql->rowCount() == 1)
 					{
@@ -37,7 +38,11 @@ if(filter_has_var(INPUT_POST,'altera_perfil_titulo') && filter_has_var(INPUT_POS
 					{
 						$array["MSG"] = SqlErro($sql->errorInfo()[2]);
 					}
-				}catch(PDOException $e){$array["MSG"] = $e->getMessage();}
+					$connnect->commit();
+				}catch(Exception $e){
+					$connnect->rollback();
+					$array["MSG"] = $e->getMessage();
+				}
 			}else
 				$array["MSG"] = "Caracteres para titulo 4 - 99";
 			}else

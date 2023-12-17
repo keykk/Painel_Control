@@ -9,9 +9,10 @@ if(filter_has_var(INPUT_POST,'perfil_titulo') && filter_has_var(INPUT_POST,'perf
 			$per->Content($titulo,"titulo","perfil_acesso");
 			if($per->retorno == 0)
 			{
+				$sql = $connnect->prepare("INSERT INTO perfil_acesso (titulo,descricao) VALUES (?,?)");
 				try
 				{
-					$sql = $connnect->prepare("INSERT INTO perfil_acesso (titulo,descricao) VALUES (?,?)");
+					$connnect->beginTransaction();
 					$sql->execute(array($titulo,$desc));
 					
 					if($sql->rowCount() == 1)
@@ -22,7 +23,12 @@ if(filter_has_var(INPUT_POST,'perfil_titulo') && filter_has_var(INPUT_POST,'perf
 					}
 					else
 						$array["MSG"] = SqlErro($sql->errorInfo()[2]);
-				}catch(PDOException $e){$array["MSG"] = $e->getMessage();}
+					
+					$connnect->commit();
+				}catch(Exception $e){
+					$connnect->rollback();
+					$array["MSG"] = $e->getMessage();
+				}
 			}else
 				$array["MSG"] = "Titulo já esta em uso!";
 		}else
